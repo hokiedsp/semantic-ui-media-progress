@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.3/components/icon.min.css">
+  <link rel="stylesheet" type="text/css" href="../node_modules/semantic-ui-progress/progress.min.css">
+  <link rel="stylesheet" type="text/css" href="../src/mediaProgress.css">
+  <style>
+    video {
+      /* height: 100%; */
+      width: 60%;
+      border: 1px solid #262626;
+    }
+  </style>
+
+  <script src="../node_modules/jquery/dist/jquery.min.js"></script>
+  <script src="../node_modules/semantic-ui-progress/progress.min.js"></script>
+</head>
+
+<body>
+  <video id='media-video' controls type='video/mp4'>
+  </video>
+  <div class="ui progress media" id="progressBar" data-media="#media-video">
+    <div class="bar">
+      <div class="cursor">
+        <i class="fitted circle icon"></i>
+      </div>
+    </div>
+  </div>
+  <button onclick="load()">Load Video!</button>
+  <button onclick="unload()">Unload Video!</button>
+  <script src="../src/mediaProgress.js"></script>
+  <script>
+    function load() {
+      $("video")[0].pause();
+      $("video").attr('src','file:\\\D:\Users\TakeshiIkuma\Documents\Research\clinicdata_conversion\bg73008 1wk post.mp4');
+      $("video")[0].load();
+      // $("video")[0].play();
+    }
+    function unload() {
+      $("video")[0].pause();
+      $("source").removeAttr('src')
+      $("video")[0].load();
+    }
+
+    var video = document.getElementById("media-video");;
+    video.controls = false;
+    $('#progressBar').mediaProgress({media: video});
+    
+    document.addEventListener("DOMContentLoaded", async () => {
+      video.addEventListener('loadeddata', () => { console.log('loadeddata'); this.play(); });
+      // video.addEventListener('loadedmetadata', () => { console.log('loadedmetadata'); $('#progressBar').progress("set total", video.duration); });
+      // video.addEventListener('timeupdate', () => { $('#progressBar').progress("update progress", video.currentTime); });
+      video.addEventListener('ended', () => {
+        video.currentTime = 0;
+        // video.play();
+      }, false);
+      video.addEventListener('emptied', () => { console.log("emptied event fired!"); });
+      // Add an event listener to listen for the mouseup event on the progress bar
+      // $('#progressBar').progress({ value: 0, autoSuccess: false, showActivity: false, precision: 100, duration: 250 });
+      // $('#progressBar .bar').css("transitionDuration", "250ms");
+      // $('#progressBar .bar').css("transitionTimingFunction", "linear");
+
+      video.play();
+      // $("#progressBar").mousedown(startDragPlayPosition);
+      // $("#progressBar>.bar").mousedown(startDragPlayPosition);
+      // $("#progressBar>.bar>.cursor").mousedown(startDragPlayPosition);
+      // $("#progressBar>.bar").mouseenter(toggleCursor);
+      // $("#progressBar>.bar").mouseleave(toggleCursor);
+    })
+
+
+    // function toggleCursor(e) {
+    //   // e.type: "mouseleave"/"mouseenter"
+    //   $("#progressBar>.bar>.cursor").toggleClass("hide");
+    // }
+
+    // // Set the play position of the video based on the mouse click at x
+    // function setPlayPosition(e) {
+    //   let progressBar = document.querySelector("#progressBar");
+    //   let value = (e.originalEvent.pageX - findPos(progressBar)) / progressBar.clientWidth;
+    //   let timeToSet = (video.duration * value).toFixed(2);
+    //   $('#progressBar').progress("update progress", timeToSet);
+    //   video.currentTime = timeToSet;
+    // }
+
+    // // Find the real position of obj
+    // function findPos(obj) {
+    //   var curleft = 0;
+    //   if (obj.offsetParent) {
+    //     do { curleft += obj.offsetLeft; } while (obj = obj.offsetParent);
+    //   }
+    //   return curleft;
+    // }
+
+    // var playing;
+    // var animeDuration;
+    // function startDragPlayPosition(e) {
+    //   playing = !video.paused;
+    //   if (playing) video.pause();
+    //   document.querySelector("#progressBar>.bar>.cursor").style.cursor = "grabbing";
+    //   let bar = $("#progressBar>.bar");
+    //   animeDuration = bar.css("transition-duration");
+    //   bar.css("transition-duration", "0s");
+    //   $(window).mousemove(setPlayPosition);
+    //   $(window).mouseup(stopDragPlayPosition);
+    //   e.stopPropagation();
+    //   setPlayPosition(e);
+    // }
+    // function stopDragPlayPosition(e) {
+    //   $(window).off("mousemove", setPlayPosition);
+    //   $(window).off("mouseup", setPlayPosition);
+    //   document.querySelector("#progressBar>.bar>.cursor").style.cursor = null;
+    //   $("#progressBar>.bar").css("transition-duration", animeDuration);
+    //   if (playing) video.play();
+    // }
+
+  </script>
+</body>
+
+</html>

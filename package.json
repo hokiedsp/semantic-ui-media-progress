@@ -1,0 +1,22 @@
+{
+  "name": "semantic-ui-media-progress",
+  "version": "0.0.1",
+  "description": "Extension of semantic-ui progress bar for media with interaction",
+  "main": "index.js",
+  "devDependencies": {
+    "jquery": "^3.3.1",
+    "semantic-ui-icon": "^2.3.3",
+    "semantic-ui-progress": "^2.3.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "semantic-ui",
+    "progress bar",
+    "media playback",
+    "interactive"
+  ],
+  "author": "Takeshi Ikuma",
+  "license": "MIT"
+}

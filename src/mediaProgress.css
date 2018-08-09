@@ -1,0 +1,35 @@
+.ui.progress.media > .bar {
+  min-width: 0;
+  -webkit-transition: width 250ms linear;
+  transition: width 250ms linear;
+}
+.ui.progress.media > .bar > .cursor {
+  height: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  align-content: center;
+  opacity: 1;
+  transition: opacity 300ms ease;
+  -webkit-transition: opacity 300ms ease;
+}
+.ui.progress.media > .bar > .cursor i {
+  -webkit-transform: translateX(50%);
+  transform: translateX(50%);
+}
+.ui.progress.media > .bar > .cursor.hide,
+.ui.progress.media.disabled > .bar > .cursor {
+  opacity: 0;
+}
+.ui.progress.media > .bar > .cursor > i:hover {
+  cursor: grab;
+}
+.ui.progress.media > .bar > .cursor.grabbed > i {
+  cursor: grabbing;
+}
+.ui.progress.media.disabled,
+.ui.progress.media.disabled > .bar,
+.ui.progress.media.disabled > .bar > .cursor,
+.ui.progress.media.disabled > .bar > .marker {
+  pointer-events: none;
+}
