@@ -45,7 +45,7 @@
         $bar = $(this).find(selector.bar),
         $cursor = $(this).find(selector.cursor),
         $media = null,
-        $markers,
+        $marker,
         playing = false,
         animeDuration = false,
         module;
@@ -113,19 +113,70 @@
           $media = media;
           module.bind.mediaEvents();
 
-          module.debug('Attached to', $media[0]);
+          module.debug("Attached to", $media[0]);
         },
 
         detach: function() {
           if (!$media) return;
-          module.debug('Detached from', $media[0]);
+          module.debug("Detached from", $media[0]);
           $media.off(mediaEventNamespace);
           $media = null;
         },
 
         add: {
-          marker: function(time) {
-
+          /**
+           * Add a marker at the specified time
+           * @param[Object] opts  Marker options
+           *   - time [Number] time  Marker time in seconds. Ignored if not attached to a media element.
+           *   - id [String] Unique element id for the marker div
+           *   - color [String] One of Semantic UI color
+           *   - position [String] One of [{'bottom'}|'top'|'none'] to specify
+           *                       the placement of marker icon
+           *   - tooltip [String] Tooltip string
+           *   - iconHTML [String|HTMLElement] to specify custom marker icon
+           * @returns jQuery object containing the created marker
+           */
+          marker: function(opts = {}) {
+            module.debug("Adding a marker:", opts);
+            $marker = $(
+              '<div class="marker"><button>' +
+                (opts.iconHTML
+                  ? opts.iconHTML
+                  : settings.defaultMarkerIconHTML) +
+                "</button></div>"
+            );
+            $module.append($marker);
+            if (opts.id) $marker.attr("id", opts.id);
+            if (opts.color) $marker.addClass(opts.color);
+            if (opts.position) $marker.addClass(opts.position);
+            if (opts.position != "top" && !opts.iconHTML)
+              $marker.find("button>i").addClass("vertically flipped");
+            if (opts.tooltip) {
+              $marker.attr("data-tooltip", opts.tooltip);
+              $marker.attr("data-variation", "tiny");
+              if ($marker.hasClass("top"))
+                $marker.attr("data-position", "bottom center");
+            }
+            if ($media) {
+              let media = $media[0];
+              if (opts.time && isFinite(media.duration)) {
+                let time = (opts.time < 0
+                  ? 0
+                  : opts.time > media.duration
+                    ? media.duration
+                    : opts.time
+                ).toFixed(3);
+                $marker.attr("data-time", time);
+                $marker.css(
+                  "left",
+                  (((time - media.duration) * 100) / media.duration).toFixed(
+                    2
+                  ) + "%"
+                );
+              }
+            }
+            module.debug("Marker created:", $marker);
+            return $marker;
           }
         },
 
@@ -191,8 +242,8 @@
               .on("mousedown" + eventNamespace, module.event.mousedown)
               .on(
                 "mousedown" + eventNamespace,
-                selector.bar + "," + selector.cursor,
-                module.event.mousedown
+                ".marker",
+                module.event.marker.mousedown
               );
             $bar
               .on("mouseenter" + eventNamespace, module.event.bar.mouseenter)
@@ -205,13 +256,19 @@
                 "loadedmetadata" + mediaEventNamespace,
                 module.event.media.loadedmetadata
               )
-              .on("loadeddata" + mediaEventNamespace, module.event.media.loadeddata)
+              .on(
+                "loadeddata" + mediaEventNamespace,
+                module.event.media.loadeddata
+              )
               .on(
                 "loadedmetadata" + mediaEventNamespace,
                 module.event.media.loadedmetadata
               )
               .on("emptied" + mediaEventNamespace, module.event.media.emptied)
-              .on("timeupdate" + mediaEventNamespace, module.event.media.timeupdate);
+              .on(
+                "timeupdate" + mediaEventNamespace,
+                module.event.media.timeupdate
+              );
           }
         },
 
@@ -242,20 +299,28 @@
               $cursor.addClass("hide");
             }
           },
+          marker: {
+            mousedown: e => {
+              $marker = $(e.target).closest(".marker");
+            }
+          },
           mousedown: e => {
-            let media = $media[0];
-            playing = !media.paused;
-            if (playing) media.pause();
-            $cursor.addClass("grabbed");
-            animeDuration = $bar.css("transition-duration");
-            $bar.css("transition-duration", "0s");
+            console.log(e.originalEvent.button);
+            if (e.originalEvent.button == 0) {
+              // only for left-mouse click
+              let media = $media[0];
+              playing = !media.paused;
+              if (playing) media.pause();
+              $cursor.addClass("grabbed");
+              animeDuration = $bar.css("transition-duration");
+              $bar.css("transition-duration", "0s");
 
-            $(window)
-              .on("mousemove", module.event.mousemove)
-              .on("mouseup", module.event.mouseup);
-
+              $(window)
+                .on("mousemove", module.event.mousemove)
+                .on("mouseup", module.event.mouseup);
+              module.event.mousemove(e);
+            }
             e.stopPropagation();
-            module.event.mousemove(e);
           },
 
           // Window mouse event callbacks
@@ -270,14 +335,17 @@
               return curleft;
             };
 
-            let progressBar = $module[0];
             let media = $media[0];
             let value =
-              (e.originalEvent.pageX - findPos(progressBar)) /
-              progressBar.clientWidth;
-            let timeToSet = (media.duration * value).toFixed(2);
+              (e.originalEvent.pageX - findPos(element)) / element.clientWidth;
+            let timeToSet = (media.duration * value).toFixed(3);
             $module.progress("update progress", timeToSet);
             media.currentTime = timeToSet;
+
+            if ($marker) {
+              $marker.attr("data-time", media.currentTime);
+              $marker.css("left", (value * 100).toFixed(2) + "%");
+            }
           },
           mouseup: e => {
             $(window)
@@ -285,6 +353,7 @@
               .off("mouseup", module.event.mouseup);
             $cursor.removeClass("grabbed");
             $bar.css("transition-duration", animeDuration);
+            if ($marker) $marker = null;
             if (playing) $media[0].play();
           }
         },
@@ -422,6 +491,8 @@
     silent: false,
     debug: false,
     verbose: false,
+
+    defaultMarkerIconHTML: '<i class="fitted marker icon"></i>',
 
     metadata: {
       media: "media"

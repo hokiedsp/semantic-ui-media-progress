@@ -5,11 +5,13 @@
   <meta charset="utf-8">
   <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.3/components/icon.min.css">
   <link rel="stylesheet" type="text/css" href="../node_modules/semantic-ui-progress/progress.min.css">
+  <link rel="stylesheet" type="text/css" href="../node_modules/semantic-ui-popup/popup.min.css">
   <link rel="stylesheet" type="text/css" href="../src/mediaProgress.css">
   <style>
     video {
       /* height: 100%; */
-      width: 60%;
+      width: 1130px;
+      height: 850px;
       border: 1px solid #262626;
     }
   </style>
@@ -22,7 +24,7 @@
   <video id='media-video' controls type='video/mp4'>
   </video>
   <!-- <div class="ui progress media" id="progressBar" data-media="#media-video"> -->
-  <div class="ui progress media" id="progressBar">
+  <div class="ui small progress media" id="progressBar">
     <div class="bar">
       <div class="cursor">
         <i class="fitted circle icon"></i>
@@ -37,7 +39,6 @@
       $("video")[0].pause();
       $("video").attr('src', 'file:\\\\\\D:\\Users\\TakeshiIkuma\\Documents\\Research\\clinicdata_conversion\\bg73008 1wk post.mp4');
       $("video")[0].play();
-      // $("video")[0].play();
     }
     function unload() {
       $("video")[0].pause();
@@ -47,76 +48,21 @@
 
     var video = document.getElementById("media-video");;
     video.controls = false;
-    $('#progressBar').mediaProgress({ media: $(video), debug: true });
+
+    let $module = $('#progressBar');
+    let element = $module[0];
+    let $marker;
+
+    $module.mediaProgress({ media: $(video), debug: true });
+    $module.mediaProgress("add marker", { position: "top", color: "blue", tooltip: "start", id: "startMarker" });
+    $module.mediaProgress("add marker", { color: "red", tooltip: "end", id: "endMarker", iconHTML: "<i class=\"fitted bookmark icon\"" });
 
     document.addEventListener("DOMContentLoaded", async () => {
-      video.addEventListener('loadeddata', () => { console.log('loadeddata'); video.play(); });
-      // video.addEventListener('loadedmetadata', () => { console.log('loadedmetadata'); $('#progressBar').progress("set total", video.duration); });
-      // video.addEventListener('timeupdate', () => { $('#progressBar').progress("update progress", video.currentTime); });
+      load();
       video.addEventListener('ended', () => {
         video.currentTime = 0;
-        // video.play();
       }, false);
-      video.addEventListener('emptied', () => { console.log("emptied event fired!"); });
-      // Add an event listener to listen for the mouseup event on the progress bar
-      // $('#progressBar').progress({ value: 0, autoSuccess: false, showActivity: false, precision: 100, duration: 250 });
-      // $('#progressBar .bar').css("transitionDuration", "250ms");
-      // $('#progressBar .bar').css("transitionTimingFunction", "linear");
-
-      video.play();
-      // $("#progressBar").mousedown(startDragPlayPosition);
-      // $("#progressBar>.bar").mousedown(startDragPlayPosition);
-      // $("#progressBar>.bar>.cursor").mousedown(startDragPlayPosition);
-      // $("#progressBar>.bar").mouseenter(toggleCursor);
-      // $("#progressBar>.bar").mouseleave(toggleCursor);
     })
-
-
-    // function toggleCursor(e) {
-    //   // e.type: "mouseleave"/"mouseenter"
-    //   $("#progressBar>.bar>.cursor").toggleClass("hide");
-    // }
-
-    // // Set the play position of the video based on the mouse click at x
-    // function setPlayPosition(e) {
-    //   let progressBar = document.querySelector("#progressBar");
-    //   let value = (e.originalEvent.pageX - findPos(progressBar)) / progressBar.clientWidth;
-    //   let timeToSet = (video.duration * value).toFixed(2);
-    //   $('#progressBar').progress("update progress", timeToSet);
-    //   video.currentTime = timeToSet;
-    // }
-
-    // // Find the real position of obj
-    // function findPos(obj) {
-    //   var curleft = 0;
-    //   if (obj.offsetParent) {
-    //     do { curleft += obj.offsetLeft; } while (obj = obj.offsetParent);
-    //   }
-    //   return curleft;
-    // }
-
-    // var playing;
-    // var animeDuration;
-    // function startDragPlayPosition(e) {
-    //   playing = !video.paused;
-    //   if (playing) video.pause();
-    //   document.querySelector("#progressBar>.bar>.cursor").style.cursor = "grabbing";
-    //   let bar = $("#progressBar>.bar");
-    //   animeDuration = bar.css("transition-duration");
-    //   bar.css("transition-duration", "0s");
-    //   $(window).mousemove(setPlayPosition);
-    //   $(window).mouseup(stopDragPlayPosition);
-    //   e.stopPropagation();
-    //   setPlayPosition(e);
-    // }
-    // function stopDragPlayPosition(e) {
-    //   $(window).off("mousemove", setPlayPosition);
-    //   $(window).off("mouseup", setPlayPosition);
-    //   document.querySelector("#progressBar>.bar>.cursor").style.cursor = null;
-    //   $("#progressBar>.bar").css("transition-duration", animeDuration);
-    //   if (playing) video.play();
-    // }
-
   </script>
 </body>
 
