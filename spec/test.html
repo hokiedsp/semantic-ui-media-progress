@@ -3,10 +3,11 @@
 
 <head>
   <meta charset="utf-8">
+  <!-- <link rel="stylesheet" type="text/css" href="../node_modules/semantic-ui-icon/icon.min.css"> -->
   <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.3/components/icon.min.css">
   <link rel="stylesheet" type="text/css" href="../node_modules/semantic-ui-progress/progress.min.css">
   <link rel="stylesheet" type="text/css" href="../node_modules/semantic-ui-popup/popup.min.css">
-  <link rel="stylesheet" type="text/css" href="../src/mediaProgress.css">
+  <link rel="stylesheet" type="text/css" href="../dist/mediaProgress.css">
   <style>
     video {
       /* height: 100%; */
@@ -21,7 +22,7 @@
 </head>
 
 <body>
-  <video id='media-video' controls type='video/mp4'>
+  <video id='media-video' type='video/mp4'>
   </video>
   <!-- <div class="ui progress media" id="progressBar" data-media="#media-video"> -->
   <div class="ui small progress media" id="progressBar">
@@ -33,7 +34,7 @@
   </div>
   <button onclick="load()">Load Video!</button>
   <button onclick="unload()">Unload Video!</button>
-  <script src="../src/mediaProgress.js"></script>
+  <script src="../dist/mediaProgress.js"></script>
   <script>
     function load() {
       $("video")[0].pause();

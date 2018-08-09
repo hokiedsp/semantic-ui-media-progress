@@ -1,6 +1,8 @@
-/*!
+/*
  * # jQuery plug-in based on Semantic UI Progress module for media playback progress bar
  */
+
+import "./mediaProgress.css";
 
 (function($, window, document, undefined) {
   "use strict";
