@@ -21,7 +21,8 @@
 <body>
   <video id='media-video' controls type='video/mp4'>
   </video>
-  <div class="ui progress media" id="progressBar" data-media="#media-video">
+  <!-- <div class="ui progress media" id="progressBar" data-media="#media-video"> -->
+  <div class="ui progress media" id="progressBar">
     <div class="bar">
       <div class="cursor">
         <i class="fitted circle icon"></i>
@@ -34,7 +35,7 @@
   <script>
     function load() {
       $("video")[0].pause();
-      $("video").attr('src','file:\\\\\\D:\\Users\\TakeshiIkuma\\Documents\\Research\\clinicdata_conversion\\bg73008 1wk post.mp4');
+      $("video").attr('src', 'file:\\\\\\D:\\Users\\TakeshiIkuma\\Documents\\Research\\clinicdata_conversion\\bg73008 1wk post.mp4');
       $("video")[0].play();
       // $("video")[0].play();
     }
@@ -46,8 +47,8 @@
 
     var video = document.getElementById("media-video");;
     video.controls = false;
-    $('#progressBar').mediaProgress();
-    
+    $('#progressBar').mediaProgress({ media: $(video), debug: true });
+
     document.addEventListener("DOMContentLoaded", async () => {
       video.addEventListener('loadeddata', () => { console.log('loadeddata'); video.play(); });
       // video.addEventListener('loadedmetadata', () => { console.log('loadedmetadata'); $('#progressBar').progress("set total", video.duration); });

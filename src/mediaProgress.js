@@ -39,14 +39,15 @@
         eventNamespace = "." + namespace,
         moduleNamespace = "module-" + namespace,
         mediaEventNamespace = ".media-" + namespace,
-        playing = false,
-        animeDuration = false,
+        element = this,
         $module = $(this),
+        instance = $module.data(moduleNamespace),
         $bar = $(this).find(selector.bar),
         $cursor = $(this).find(selector.cursor),
         $media = null,
-        element = this,
-        instance = $module.data(moduleNamespace),
+        $markers,
+        playing = false,
+        animeDuration = false,
         module;
 
       module = {
@@ -111,12 +112,65 @@
 
           $media = media;
           module.bind.mediaEvents();
+
+          module.debug('Attached to', $media[0]);
         },
 
         detach: function() {
           if (!$media) return;
+          module.debug('Detached from', $media[0]);
           $media.off(mediaEventNamespace);
           $media = null;
+        },
+
+        add: {
+          marker: function(time) {
+
+          }
+        },
+
+        get: {
+          media: function() {
+            return module.$media[0];
+          }
+        },
+
+        set: {
+          media: function(mediaValue) {
+            module.attach(mediaValue);
+          },
+          barWidth: function(value) {
+            $module.progress("set barWidth", value);
+          }
+        },
+
+        read: {
+          metadata: function() {
+            var data = {
+              media: $module.data(metadata.media)
+            };
+            if (data.media) {
+              module.debug(
+                "Attaching the media element specified by:",
+                data.media
+              );
+              module.attach(data.media);
+            }
+          },
+          settings: function() {
+            if (settings.media !== undefined) {
+              module.debug(
+                "Attaching the media element specified by:",
+                settings.media
+              );
+              try {
+                module.attach(settings.media);
+              } catch (e) {
+                settings.media = null;
+                module.error(e, settings.media);
+              }
+            }
+          }
         },
 
         bind: {
@@ -141,13 +195,11 @@
                 module.event.mousedown
               );
             $bar
-              .on("mouseenter" + eventNamespace, module.event.bar.mouseeter)
-              .on("mouseenter" + eventNamespace, module.event.bar.mouseleave);
+              .on("mouseenter" + eventNamespace, module.event.bar.mouseenter)
+              .on("mouseleave" + eventNamespace, module.event.bar.mouseleave);
           },
           mediaEvents: () => {
-
-            console.log($media);
-
+            module.verbose("Binding media events");
             $media
               .on(
                 "loadedmetadata" + mediaEventNamespace,
@@ -183,14 +235,13 @@
             }
           },
           bar: {
-            enter: e => {
+            mouseenter: e => {
               $cursor.removeClass("hide");
             },
-            leave: e => {
+            mouseleave: e => {
               $cursor.addClass("hide");
             }
           },
-
           mousedown: e => {
             let media = $media[0];
             playing = !media.paused;
@@ -204,10 +255,10 @@
               .on("mouseup", module.event.mouseup);
 
             e.stopPropagation();
-            module.event.mousedown(e);
+            module.event.mousemove(e);
           },
 
-          // Set the play position of the video based on the mouse click at x
+          // Window mouse event callbacks
           mousemove: e => {
             const findPos = obj => {
               var curleft = 0;
@@ -228,60 +279,17 @@
             $module.progress("update progress", timeToSet);
             media.currentTime = timeToSet;
           },
-
           mouseup: e => {
             $(window)
               .off("mousemove", module.event.mousemove)
               .off("mouseup", module.event.mouseup);
             $cursor.removeClass("grabbed");
             $bar.css("transition-duration", animeDuration);
-            if (playing) media[0].play();
-          }
-        },
-        read: {
-          metadata: function() {
-            var data = {
-              media: $module.data(metadata.media)
-            };
-            if (data.media) {
-              module.debug(
-                "Associated media element set from metadata",
-                data.media
-              );
-              module.attach(data.media);
-            }
-          },
-          settings: function() {
-            if (settings.media !== undefined) {
-              module.debug(
-                "Associated media element set in settings",
-                settings.media
-              );
-              try {
-                module.attach(settings.media);
-              } catch (e) {
-                settings.media = null;
-                module.error(e, settings.media);
-              }
-            }
+            if (playing) $media[0].play();
           }
         },
 
-        get: {
-          media: function() {
-            return module.$media[0];
-          }
-        },
-
-        set: {
-          media: function(mediaValue) {
-            module.attach(mediaValue);
-          },
-          barWidth: function(value) {
-            $module.progress("set barWidth", value);
-          }
-        },
-
+        // Semantic UI standard functions
         setting: function(name, value) {
           module.debug("Changing setting", name, value);
           let rval = $module.progress("setting", name, value);
