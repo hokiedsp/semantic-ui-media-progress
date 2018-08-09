@@ -140,7 +140,7 @@ import "./mediaProgress.css";
            */
           marker: function(opts = {}) {
             module.debug("Adding a marker:", opts);
-            $marker = $(
+            let $marker = $(
               '<div class="marker"><button>' +
                 (opts.iconHTML
                   ? opts.iconHTML
@@ -340,12 +340,14 @@ import "./mediaProgress.css";
             let media = $media[0];
             let value =
               (e.originalEvent.pageX - findPos(element)) / element.clientWidth;
+            if (value < 0) value = 0;
+            else if (value > 1) value = 1;
             let timeToSet = (media.duration * value).toFixed(3);
             $module.progress("update progress", timeToSet);
             media.currentTime = timeToSet;
 
             if ($marker) {
-              $marker.attr("data-time", media.currentTime);
+              $marker.attr("data-time", timeToSet);
               $marker.css("left", (value * 100).toFixed(2) + "%");
             }
           },
