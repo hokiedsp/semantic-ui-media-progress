@@ -65,13 +65,8 @@
           };
           $module.progress(
             $.isPlainObject(progressSettings)
-              ? $.extend(
-                  true,
-                  progressSettings,
-                  $.fn.progress.settings,
-                  parameters
-                )
-              : $.extend(progressSettings, $.fn.progress.settings)
+              ? $.extend(true, progressSettings, parameters)
+              : progressSettings
           );
 
           $module.addClass("disabled");
@@ -97,7 +92,6 @@
         },
 
         attach: function(media) {
-          console.log(media);
           if ($media) module.detach(media);
           if (!media) return;
           if (typeof media == "string" || media instanceof HTMLMediaElement) {
@@ -109,7 +103,6 @@
           // assign the first media element
           media = media
             .filter((i, elem) => {
-              console.log(elem)
               return elem instanceof HTMLMediaElement;
             })
             .first();
@@ -152,30 +145,33 @@
               .on("mouseenter" + eventNamespace, module.event.bar.mouseleave);
           },
           mediaEvents: () => {
+
+            console.log($media);
+
             $media
               .on(
                 "loadedmetadata" + mediaEventNamespace,
-                module.event.loadedmetadata
+                module.event.media.loadedmetadata
               )
-              .on("loadeddata" + mediaEventNamespace, module.event.loadeddata)
+              .on("loadeddata" + mediaEventNamespace, module.event.media.loadeddata)
               .on(
                 "loadedmetadata" + mediaEventNamespace,
-                module.event.loadedmetadata
+                module.event.media.loadedmetadata
               )
-              .on("emptied" + mediaEventNamespace, module.event.emptied)
-              .on("timeupdate" + mediaEventNamespace, module.event.timeupdate);
+              .on("emptied" + mediaEventNamespace, module.event.media.emptied)
+              .on("timeupdate" + mediaEventNamespace, module.event.media.timeupdate);
           }
         },
 
         event: {
           media: {
             loadedmetadata: () => {
-              $module.progress("set total", $media.duration);
+              $module.progress("set total", $media[0].duration);
               $module.progress("update progress", 0);
             },
             loadeddata: () => {
               $module.removeClass("disabled");
-              $module.progress("update progress", $media.currentTime);
+              $module.progress("update progress", $media[0].currentTime);
             },
             emptied: () => {
               $module.addClass("disabled");
@@ -183,7 +179,7 @@
               $module.progress("update progress", 0);
             },
             timeupdate: () => {
-              $module.progress("update progress", $media.currentTime);
+              $module.progress("update progress", $media[0].currentTime);
             }
           },
           bar: {
@@ -196,8 +192,9 @@
           },
 
           mousedown: e => {
-            playing = !$media.paused;
-            if (playing) $media.pause();
+            let media = $media[0];
+            playing = !media.paused;
+            if (playing) media.pause();
             $cursor.addClass("grabbed");
             animeDuration = $bar.css("transition-duration");
             $bar.css("transition-duration", "0s");
@@ -223,12 +220,13 @@
             };
 
             let progressBar = $module[0];
+            let media = $media[0];
             let value =
               (e.originalEvent.pageX - findPos(progressBar)) /
               progressBar.clientWidth;
-            let timeToSet = ($media.duration * value).toFixed(2);
+            let timeToSet = (media.duration * value).toFixed(2);
             $module.progress("update progress", timeToSet);
-            $media.currentTime = timeToSet;
+            media.currentTime = timeToSet;
           },
 
           mouseup: e => {
@@ -237,7 +235,7 @@
               .off("mouseup", module.event.mouseup);
             $cursor.removeClass("grabbed");
             $bar.css("transition-duration", animeDuration);
-            if (playing) $media.play();
+            if (playing) media[0].play();
           }
         },
         read: {
@@ -254,16 +252,16 @@
             }
           },
           settings: function() {
-            if (settings.$media !== null) {
+            if (settings.media !== undefined) {
               module.debug(
                 "Associated media element set in settings",
-                settings.$media
+                settings.media
               );
               try {
-                module.attach(settings.$media);
+                module.attach(settings.media);
               } catch (e) {
-                settings.$media = null;
-                module.error(e, settings.$media);
+                settings.media = null;
+                module.error(e, settings.media);
               }
             }
           }
