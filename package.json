@@ -2,6 +2,11 @@
   "name": "semantic-ui-media-progress",
   "version": "0.0.1",
   "description": "Extension of semantic-ui progress bar for media with interaction",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hokiedsp/semantic-ui-media-progress.git"
+  },
+  "homepage": "https://github.com/hokiedsp/semantic-ui-media-progress",
   "main": "index.js",
   "devDependencies": {
     "jquery": "^3.3.1",
