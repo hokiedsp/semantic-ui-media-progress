@@ -52,12 +52,36 @@ import "./mediaProgress.css";
         animeDuration = false,
         module;
 
+      const _find_pos = obj => {
+          return obj.getBoundingClientRect().left;
+        },
+        _time2px = t => {
+          let media = $media[0];
+          if (t < 0) t = 0;
+          else if (t > media.duration) t = media.duration;
+          return (t / media.duration) * element.clientWidth;
+        },
+        _px2time = px => {
+          let value = px / element.clientWidth;
+          if (value < 0) value = 0;
+          else if (value > 1) value = 1;
+          return ($media[0].duration * value).toFixed(3);
+        },
+        _marker_id = id => {
+          let $marker;
+          if (typeof id == "string" || id instanceof HTMLElement) return $(id);
+          else if (typeof id == "number")
+            return $module.find(".marker").slice(id, id + 1);
+          else if (id instanceof jQuery) return id;
+          else {
+            module.verbose("Invalid marker id given:", id);
+            return $();
+          }
+        };
+
       module = {
         initialize: function() {
           module.debug("Initializing media progress bar", settings);
-
-          module.read.metadata();
-          module.read.settings();
 
           // create Semantic-UI progress module
           let progressSettings = {
@@ -74,6 +98,10 @@ import "./mediaProgress.css";
 
           $module.addClass("disabled");
           $cursor.addClass("hide");
+
+          module.read.metadata();
+          module.read.settings();
+
           module.bind.events();
 
           module.instantiate();
@@ -116,6 +144,13 @@ import "./mediaProgress.css";
           module.bind.mediaEvents();
 
           module.debug("Attached to", $media[0]);
+
+          // if media is already loaded, enable
+          if ($media[0].currentSrc) {
+            module.debug("Media already loaded", $media[0]);
+            $module.removeClass("disabled");
+            module.set.marker.time(0);
+          }
         },
 
         detach: function() {
@@ -131,6 +166,7 @@ import "./mediaProgress.css";
            * @param[Object] opts  Marker options
            *   - time [Number] time  Marker time in seconds. Ignored if not attached to a media element.
            *   - id [String] Unique element id for the marker div
+           *   - class [String] Class name for the marker div
            *   - color [String] One of Semantic UI color
            *   - position [String] One of [{'bottom'}|'top'|'none'] to specify
            *                       the placement of marker icon
@@ -141,7 +177,7 @@ import "./mediaProgress.css";
           marker: function(opts = {}) {
             module.debug("Adding a marker:", opts);
             let $marker = $(
-              '<div class="marker"><button>' +
+              '<div class="marker" data-time=0><button>' +
                 (opts.iconHTML
                   ? opts.iconHTML
                   : settings.defaultMarkerIconHTML) +
@@ -149,6 +185,7 @@ import "./mediaProgress.css";
             );
             $module.append($marker);
             if (opts.id) $marker.attr("id", opts.id);
+            if (opts.class) $marker.addClass(opts.class);
             if (opts.color) $marker.addClass(opts.color);
             if (opts.position) $marker.addClass(opts.position);
             if (opts.position != "top" && !opts.iconHTML)
@@ -159,24 +196,9 @@ import "./mediaProgress.css";
               if ($marker.hasClass("top"))
                 $marker.attr("data-position", "bottom center");
             }
-            if ($media) {
-              let media = $media[0];
-              if (opts.time && isFinite(media.duration)) {
-                let time = (opts.time < 0
-                  ? 0
-                  : opts.time > media.duration
-                    ? media.duration
-                    : opts.time
-                ).toFixed(3);
-                $marker.attr("data-time", time);
-                $marker.css(
-                  "left",
-                  (((time - media.duration) * 100) / media.duration).toFixed(
-                    2
-                  ) + "%"
-                );
-              }
-            }
+            if (opts.time && $media && isFinite($media[0].duration))
+              module.set.marker.time($marker, opts.time);
+
             module.debug("Marker created:", $marker);
             return $marker;
           }
@@ -185,6 +207,12 @@ import "./mediaProgress.css";
         get: {
           media: function() {
             return module.$media[0];
+          },
+          marker: {
+            time: id => {
+              if (id) return _marker_id(id).data("time");
+              else return $module.find(".marker").data("time");
+            }
           }
         },
 
@@ -194,6 +222,22 @@ import "./mediaProgress.css";
           },
           barWidth: function(value) {
             $module.progress("set barWidth", value);
+          },
+          marker: {
+            time: (id, time) => {
+              let $marker;
+              if (arguments.length > 1) {
+                $marker = _marker_id(id);
+              } else {
+                $marker = $module.find(".marker");
+              }
+              let media = $media[0];
+              $marker.css("left", _time2px(time) + "px");
+              $marker.data(
+                "time",
+                time < 0 ? 0 : time > media.duration ? media.duration : time
+              );
+            }
           }
         },
 
@@ -277,14 +321,18 @@ import "./mediaProgress.css";
         event: {
           media: {
             loadedmetadata: () => {
+              module.debug("Attached media loaded metadata");
               $module.progress("set total", $media[0].duration);
               $module.progress("update progress", 0);
+              module.set.marker.time(0);
             },
             loadeddata: () => {
+              module.debug("Attached media loaded data", $module);
               $module.removeClass("disabled");
               $module.progress("update progress", $media[0].currentTime);
             },
             emptied: () => {
+              module.debug("Attached media emptied data", $module);
               $module.addClass("disabled");
               $cursor.addClass("hide");
               $module.progress("update progress", 0);
@@ -307,7 +355,6 @@ import "./mediaProgress.css";
             }
           },
           mousedown: e => {
-            console.log(e.originalEvent.button);
             if (e.originalEvent.button == 0) {
               // only for left-mouse click
               let media = $media[0];
@@ -327,28 +374,15 @@ import "./mediaProgress.css";
 
           // Window mouse event callbacks
           mousemove: e => {
-            const findPos = obj => {
-              var curleft = 0;
-              if (obj.offsetParent) {
-                do {
-                  curleft += obj.offsetLeft;
-                } while ((obj = obj.offsetParent));
-              }
-              return curleft;
-            };
-
-            let media = $media[0];
-            let value =
-              (e.originalEvent.pageX - findPos(element)) / element.clientWidth;
-            if (value < 0) value = 0;
-            else if (value > 1) value = 1;
-            let timeToSet = (media.duration * value).toFixed(3);
+            let pxToSet = e.originalEvent.pageX - _find_pos(element);
+            let timeToSet = _px2time(pxToSet);
             $module.progress("update progress", timeToSet);
-            media.currentTime = timeToSet;
+            $media[0].currentTime = timeToSet;
 
             if ($marker) {
               $marker.attr("data-time", timeToSet);
-              $marker.css("left", (value * 100).toFixed(2) + "%");
+              $marker.css("left", _time2px(timeToSet) + "px");
+              settings.onMarkerMove(timeToSet, $marker);
             }
           },
           mouseup: e => {
@@ -497,6 +531,9 @@ import "./mediaProgress.css";
     verbose: false,
 
     defaultMarkerIconHTML: '<i class="fitted marker icon"></i>',
+
+    /* Callbacks */
+    onMarkerMove: function(time, $selected) {},
 
     metadata: {
       media: "media"
