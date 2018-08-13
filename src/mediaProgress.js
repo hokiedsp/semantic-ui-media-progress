@@ -69,10 +69,11 @@ import "./mediaProgress.css";
         },
         _marker_id = id => {
           let $marker;
-          if (typeof id == "string" || id instanceof HTMLElement) return $(id);
+          if (typeof id == "string") return module.get.marker.$(id);
+          else if (id instanceof HTMLElement) return $(id);
           else if (typeof id == "number")
             return $module.find(".marker").slice(id, id + 1);
-          else if (id instanceof jQuery) return id;
+          else if (id instanceof jQuery && id.hasClass("marker")) return id;
           else {
             module.verbose("Invalid marker id given:", id);
             return $();
@@ -160,6 +161,41 @@ import "./mediaProgress.css";
           $media = null;
         },
 
+        goto: {
+          nextMarker: () => {
+            let media = $media[0];
+            let time = module.find.nextMarkedTime(media.currentTime);
+            if (!time) return false;
+            media.currentTime = time;
+            return true;
+          },
+          prevMarker: () => {
+            let media = $media[0];
+            let time = module.find.prevMarkedTime(media.currentTime);
+            if (!time) return false;
+            media.currentTime = time;
+            return true;
+          }
+        },
+
+        find: {
+          nextMarkedTime: time => {
+            time = [...$module.children(".marker")]
+              .map(el => Number(el.getAttribute("data-time")))
+              .sort()
+              .find(t => t > time);
+            return time != null ? time : null;
+          },
+          prevMarkedTime: time => {
+            time = [...$module.children(".marker")]
+              .map(el => Number(el.getAttribute("data-time")))
+              .sort()
+              .reverse()
+              .find(t => t < time);
+            return time != null ? time : null;
+          }
+        },
+
         add: {
           /**
            * Add a marker at the specified time
@@ -200,15 +236,32 @@ import "./mediaProgress.css";
               module.set.marker.time($marker, opts.time);
 
             module.debug("Marker created:", $marker);
+            settings.onMarkerAdded(Number($marker.data("time")), $marker);
             return $marker;
           }
         },
+        remove: {
+          marker: selector => {
+            let $marker = $module.find(".marker").filter(selector);
+            if ($marker.length < 1) return;
 
+            let time = Number($marker.data("time"));
+
+            $marker.remove();
+            module.debug("Marker removed:", $marker);
+            settings.onMarkerRemoved(time, $marker);
+          }
+        },
         get: {
           media: function() {
             return module.$media[0];
           },
           marker: {
+            $: selector =>
+              selector
+                ? $module.find(".marker").filter(selector)
+                : $module.find(".marker"),
+            count: () => $module.find(".marker").length,
             time: id => {
               if (id) return _marker_id(id).data("time");
               else return $module.find(".marker").data("time");
@@ -225,6 +278,7 @@ import "./mediaProgress.css";
           },
           marker: {
             time: (id, time) => {
+              module.debug("set marker time arguments:", id, time);
               let $marker;
               if (arguments.length > 1) {
                 $marker = _marker_id(id);
@@ -233,10 +287,15 @@ import "./mediaProgress.css";
               }
               let media = $media[0];
               $marker.css("left", _time2px(time) + "px");
-              $marker.data(
-                "time",
+              module.debug(
+                "set marker time data to: ",
                 time < 0 ? 0 : time > media.duration ? media.duration : time
               );
+              $marker.attr(
+                "data-time",
+                time < 0 ? 0 : time > media.duration ? media.duration : time
+              );
+              module.debug("marker time data: ", $marker.data("time"));
             }
           }
         },
@@ -380,9 +439,10 @@ import "./mediaProgress.css";
             $media[0].currentTime = timeToSet;
 
             if ($marker) {
+              const oldTime = $marker.data("time");
               $marker.attr("data-time", timeToSet);
               $marker.css("left", _time2px(timeToSet) + "px");
-              settings.onMarkerMove(timeToSet, $marker);
+              settings.onMarkerMove(timeToSet, oldTime, $marker);
             }
           },
           mouseup: e => {
@@ -533,7 +593,9 @@ import "./mediaProgress.css";
     defaultMarkerIconHTML: '<i class="fitted marker icon"></i>',
 
     /* Callbacks */
-    onMarkerMove: function(time, $selected) {},
+    onMarkerMove: function(newTime, oldTime, $selected) {},
+    onMarkerAdded: function(time, $marker) {},
+    onMarkerRemoved: function(time, $marker) {},
 
     metadata: {
       media: "media"
